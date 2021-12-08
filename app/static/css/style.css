@@ -1,0 +1,16 @@
+
+#message {
+    list-style-type: none;
+}
+
+#list-user {
+    list-style-type: none;
+}
+
+.item-user {
+    cursor: pointer;
+}
+
+.item-user:hover {
+    font-weight: 700;
+}

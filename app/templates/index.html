@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat room</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js" integrity="sha256-/H4YS+7aYb9kJ5OKhFYPUjSJdrtV6AeyJOtTkw6X72o=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/node-forge@0.7.0/dist/forge.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/peterolson/BigInteger.js@1.6.40/BigInteger.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</head>
+<body>
+    <script>
+        var username = '';
+        var sid = '';
+        var pid;
+        var g, p;
+        var a;
+        var A;
+        var B = bigInt(0);
+        var K = bigInt(0);
+
+        while(username == '') {
+            username = prompt('Type here');
+        }
+
+        $(document).ready(function() {
+            document.getElementById('username').innerText = username;
+
+            var socket = io.connect('http://127.0.0.1:5000');
+
+            socket.on('connect', function(json) {
+                socket.emit('login', {username: username})
+                sid = socket.io.engine.id;
+            })
+
+            socket.on('users', function(users) {
+                document.getElementById('count').innerText = users.user_count;
+                $.ajax({
+                    url: "/api/get_list_users", 
+                    method: 'GET',
+                    success: function(result){
+                        console.log(result);
+                        document.getElementById('list-user').innerHTML = '';
+                        for(let user in result) {
+                            if (user != sid) {
+                                var item = document.createElement('li');
+                                item.classList.add('item-user');
+                                item.innerText = result[user];
+                                item.addEventListener("click", function() {
+                                    $.ajax({
+                                        url: "/api/create_room",
+                                        method: 'POST',
+                                        data: {
+                                            sid: sid,
+                                            pid: user
+                                        },
+                                        success: function(data) {
+                                            console.log(data);
+                                        }
+                                    })
+                                });
+                                $("#list-user").append(item);
+                            }
+                    }
+                }});
+            });
+
+            socket.on('message', function(json) {
+                var decrypted = CryptoJS.AES.decrypt(json.msg, K.toString());
+                var message = document.createElement('li');
+                message.innerText = json.username + ': ' + decrypted.toString(CryptoJS.enc.Utf8);
+                $('#message').append(message);
+            })
+
+            socket.on('create_room', function(json) {
+                if (json.header == 'init_g_p') {
+                    g = bigInt(json.g);
+                    p = bigInt(json.p);
+                    pid = json.pid;
+                    document.getElementById('num-g').innerText = g.value;
+                    document.getElementById('num-p').innerText = p.value;
+                    a = bigInt(getRndInteger(20, 100));
+                    A = g.modPow(a, p);
+
+                    document.getElementById('private-key-a').innerText = a.toString();
+                    document.getElementById('share-key-A').innerText = A.toString();
+
+                    socket.emit(
+                        'create_room', 
+                        { 
+                            header: 'share_key', 
+                            key: A.toJSON(), 
+                            sid: sid, 
+                            pid: pid
+                        }
+                    );
+                } else if (json.header == 'share_key') {
+                    B = bigInt(json.key);
+                    document.getElementById('share-key-B').innerText = B.value;
+                    K = B.modPow(a, p);
+                    console.log('Key K: ' + K.value);
+                    document.getElementById('key-K').innerText = K.value;
+
+                    $('#sendBtn').on('click', function() {
+                        var msg = $('#myMessage').val();
+                        console.log(msg);
+                        var encrypted = CryptoJS.AES.encrypt(msg, K.toString());
+                        console.log(encrypted.toString());
+                        socket.emit(
+                            'message', 
+                            {
+                                msg: encrypted.toString(),
+                                sid: sid,
+                                pid: pid
+                            }
+                        );
+                        $('#myMessage').val('');
+                        $('#myMessage').focus();
+                    })
+                }
+            })
+
+            
+        })
+    </script>
+    <div class="row">
+        <div class="col">
+            <h4 id="username" class="col"></h4>
+            <h5>Số lượng user: <span id="count"></span></h5>
+            <ul id="list-user">
+            </ul>
+        </div>
+        <div class="col" >
+            <div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>g</th>
+                            <th>p</th>
+                            <th>a</th>
+                            <th>A</th>
+                            <th>B</th>
+                            <th>K</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="num-g"></td>
+                            <td id="num-p"></td>
+                            <td id="private-key-a"></td>
+                            <td id="share-key-A"></td>
+                            <td id="share-key-B"></td>
+                            <td id="key-K"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="height:250px; overflow-y: scroll;">
+                <ul id="message">
+                </ul>
+            </div>
+            <input type="text" id="myMessage">
+            <button id="sendBtn" class="btn btn-primary">Send</button>
+        </div>
+    </div>
+</body>
+</html>
