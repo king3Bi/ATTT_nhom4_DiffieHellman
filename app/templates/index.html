@@ -24,58 +24,27 @@
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <div class="container">
         <div class="row">
-            <div class="col-2">
+            <div class="col-4">
                 <h4 id="username" class="col"></h4>
                 <h5>Số lượng user: <span id="count"></span></h5>
                 <ul id="list-user">
                 </ul>
             </div>
-            <div class="col-2" >
-                <div>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th>g</th>
-                                <td id="num-g"></td>
-                            </tr>
-                            <tr>
-                                <th>p</th>
-                                <td id="num-p"></td>
-                            </tr>
-                            <tr>
-                                <th>a</th>
-                                <td id="private-key-a"></td>
-                            </tr>
-                            <tr>
-                                <th>A</th>
-                                <td id="share-key-A"></td>
-                            </tr>
-                            <tr>
-                                <th>B</th>
-                                <td id="share-key-B"></td>
-                            </tr>
-                            <tr>
-                                <th>K</th>
-                                <td id="key-K"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            
             <div class="col-8">
-                <h5>Sent to <span id="sent-to-username"></span></h5>
-                <div style="height:250px; overflow-y: scroll;">
-                    <ul id="message">
-                    </ul>
+                <div style="height: 100vh;">
+                    <div class="card" style=" height: 80%; overflow-y: scroll;">
+                        <div class="card-body">
+                            <h5 class="card-title">With: <span id="sent-to-username"></span></h5>
+                            <ul id="message">
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-inline justify-content-center">
+                        <textarea class="form-control" rows="2" id="myMessage"></textarea>
+                        <button id="sendBtn" class="btn btn-primary">Send</button>
+                    </div>
                 </div>
-                <textarea class="form-control" rows="1" id="myMessage"></textarea>
-                <button id="sendBtn" class="btn btn-primary">Send</button>
             </div>
         </div>
     </div>

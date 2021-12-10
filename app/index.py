@@ -65,20 +65,47 @@ def connect():
 def disconnect():
     global clients
     print('user disconnect, has {} connection'.format(len(clients)))
+    emit(
+        'users', 
+        {
+            'user_count': len(clients),
+            'list_users': clients
+        }, 
+        broadcast=True
+    )
 
 @socketio.on('create_room')
 def handles(json):
     if json.get('header') == 'init_g_p':
-        g = utils.generate_big_prime(32)
-        p = utils.generate_big_prime(32)
-
-        print('g: {}, p: {}'.format(g, p))
-
         sid = json.get('sid')
         pid = json.get('pid')
+
+        g = json.get('g')
+        p = json.get('p')
+        print('g: {}, p: {}'.format(g, p))
         
-        emit('create_room', { 'header': 'init_g_p', 'g': g, 'p': p , 'pid': pid}, namespace='/', room=sid)
-        emit('create_room', { 'header': 'init_g_p', 'g': g, 'p': p , 'pid': sid}, namespace='/', room=pid)
+        emit(
+            'create_room', 
+            {
+                'header': json.get('header'), 
+                'g': g,
+                'p': p,
+                'pid': pid
+            }, 
+            namespace='/', 
+            room=sid
+        )
+        emit(
+            'create_room', 
+            {
+                'header': json.get('header'), 
+                'g': g,
+                'p': p,
+                'pid': sid
+            }, 
+            namespace='/', 
+            room=pid
+        )
         
     elif json.get('header') == 'share_key':
         print('Share key {}: {}'.format(clients.get(request.sid), json.get('key')))

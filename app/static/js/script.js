@@ -16,10 +16,6 @@ var K;
 
 // danh sách user online
 var listUsers;
-// hàm random số nguyên
-function getRndInteger(min, max) {
-    return Math.floor(Math.random() * (max - min + 1) ) + min;
-}
 
 // hàm kiểm tra số nguyên tố
 function isPrime(num) {
@@ -42,7 +38,14 @@ function isPrime(num) {
     return true;
 }
 
-// hàm sinh số nguyên tố lớn
+// hàm sinh số nguyên theo số bit
+function generateBigInt(n) {
+    const begin = bigInt(2).pow(n-1);
+    const end = bigInt(2).pow(n);
+    return bigInt.randBetween(begin, end);
+}
+
+// hàm sinh số nguyên tố lớn theo số bit
 function generateBigPrime(n) {
     const foundPrime = false;
     while (!foundPrime) {
@@ -81,13 +84,16 @@ $(document).ready(function() {
                 item.innerText = listUsers[user];
                 item.addEventListener("click", function() {
                     document.getElementById('sent-to-username').innerText = listUsers[user];
+                    document.getElementById('message').innerHTML = '';
 
                     socket.emit(
                         'create_room', 
                         {
                             header: 'init_g_p', 
                             sid: sid, 
-                            pid: user
+                            pid: user,
+                            g: generateBigPrime(16).toJSON(),
+                            p: generateBigPrime(16).toJSON()
 
                         }
                     );
@@ -103,14 +109,9 @@ $(document).ready(function() {
             p = bigInt(json.p);
             pid = json.pid;
 
-            document.getElementById('sent-to-username').innerText = listUsers[pid]
-            document.getElementById('num-g').innerText = g.value;
-            document.getElementById('num-p').innerText = p.value;
-            a = bigInt(getRndInteger(20, 100));
+            document.getElementById('sent-to-username').innerText = listUsers[pid];
+            a = generateBigInt(8);
             A = g.modPow(a, p);
-
-            document.getElementById('private-key-a').innerText = a.toString();
-            document.getElementById('share-key-A').innerText = A.toString();
 
             socket.emit(
                 'create_room', 
@@ -123,10 +124,18 @@ $(document).ready(function() {
             );
         } else if (json.header == 'share_key') {
             B = bigInt(json.key);
-            document.getElementById('share-key-B').innerText = B.value;
             K = B.modPow(a, p);
-            console.log('Key K: ' + K.value);
-            document.getElementById('key-K').innerText = K.value;
+
+            const li = document.createElement('li');
+            li.innerText = `Đã thực hiện trao đổi khóa bằng thuật toán Diffie Hellman.\n` + 
+                `Có:\n` + 
+                `Căn nguyên thủy công khai(g): ${g}\n` + 
+                `Số nguyên tố công khai(p): ${p}\n` + 
+                `Khóa riêng của bạn(a): ${a}\n ` + 
+                `Khóa công khai của bạn(A): ${A}\n` + 
+                `Khóa công khai của ${listUsers[pid]}(B): ${B}\n` + 
+                `Khóa bí mật được tính ra từ thuật toán(K): ${K}`;
+            $('#message').append(li);
 
             $('#sendBtn').on('click', function() {
                 var msg = $('#myMessage').val();
@@ -150,7 +159,7 @@ $(document).ready(function() {
     socket.on('message', function(json) {
         var decrypted = CryptoJS.AES.decrypt(json.msg, K.toString());
         var message = document.createElement('li');
-        message.innerText = json.username + ': ' + decrypted.toString(CryptoJS.enc.Utf8);
+        message.innerHTML = `<strong>${json.username}</strong>: ${decrypted.toString(CryptoJS.enc.Utf8)}`;
         $('#message').append(message);
     });
 })
