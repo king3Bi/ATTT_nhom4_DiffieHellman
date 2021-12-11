@@ -3,6 +3,7 @@ from flask import render_template, request, jsonify
 from flask_socketio import send, emit
 import app.utils as utils
 import random
+from datetime import datetime
 
 clients = {}
 
@@ -11,20 +12,19 @@ def handlesMessage(json):
     global clients
     print('Message: ' + json.get('msg'))
     username = clients.get(json.get('sid'))
+    data_msg = {
+        'msg': json.get('msg'),
+        'username': username,
+        'time': str(datetime.now())[:19]
+    }
     emit(
         'message', 
-        {
-            'msg': json.get('msg'),
-            'username': username
-        }, 
+        data_msg, 
         room=json.get('pid')
     )
     emit(
         'message', 
-        {
-            'msg': json.get('msg'),
-            'username': username
-        }, 
+        data_msg, 
         room=json.get('sid')
     )
 
@@ -33,6 +33,13 @@ def login(json):
     print('User login:', json.get('username'))
     global clients
     clients[request.sid] = json.get('username')
+    emit(
+        'login',
+        {
+            'sid': request.sid
+        },
+        room=request.sid
+    )
     emit(
         'users', 
         {
@@ -114,6 +121,5 @@ def handles(json):
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 

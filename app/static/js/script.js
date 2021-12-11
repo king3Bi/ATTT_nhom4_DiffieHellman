@@ -61,11 +61,17 @@ function generateBigPrime(n) {
 $(document).ready(function() {
     document.getElementById('username').innerText = username;
 
-    var socket = io.connect('http://127.0.0.1:5000');
+    var socket = io('http://127.0.0.1:5000');
 
     socket.on('connect', function(json) {
         socket.emit('login', {username: username})
-        sid = socket.io.engine.id;
+        // sid = socket.io.engine.id;
+        // console.log(sid);
+        // console.log(socket.sessionid);
+    })
+
+    socket.on('login', function(json) {
+        sid = json.sid;
     })
 
     window.addEventListener("beforeunload", function() {
@@ -139,9 +145,11 @@ $(document).ready(function() {
 
             $('#sendBtn').on('click', function() {
                 var msg = $('#myMessage').val();
-                console.log(msg);
+                console.log(`Plaintext: ${msg}`);
+
                 var encrypted = CryptoJS.AES.encrypt(msg, K.toString());
-                console.log(encrypted.toString());
+                console.log(`Ciphertext: ${encrypted.toString()}`);
+
                 socket.emit(
                     'message', 
                     {
@@ -152,15 +160,24 @@ $(document).ready(function() {
                 );
                 $('#myMessage').val('');
                 $('#myMessage').focus();
-            })
+            });
         }
     });
 
     socket.on('message', function(json) {
+        console.log(`Ciphertext: ${json.msg}`);
+
         var decrypted = CryptoJS.AES.decrypt(json.msg, K.toString());
+        console.log(`Plaintext: ${decrypted.toString(CryptoJS.enc.Utf8)}`);
+
         var message = document.createElement('li');
-        message.innerHTML = `<strong>${json.username}</strong>: ${decrypted.toString(CryptoJS.enc.Utf8)}`;
+        message.innerHTML = `<i style="font-size: 13px;"><u>${json.time}</u></i>: ` + 
+                            `<strong>${json.username}</strong>: ` + 
+                            `${decrypted.toString(CryptoJS.enc.Utf8)}`;
         $('#message').append(message);
+
+        const objDiv = document.getElementById('contain-message')
+        objDiv.scrollTop = objDiv.scrollHeight;
     });
 })
 
