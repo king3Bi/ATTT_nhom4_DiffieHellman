@@ -65,9 +65,6 @@ $(document).ready(function() {
 
     socket.on('connect', function(json) {
         socket.emit('login', {username: username})
-        // sid = socket.io.engine.id;
-        // console.log(sid);
-        // console.log(socket.sessionid);
     })
 
     socket.on('login', function(json) {
@@ -95,6 +92,7 @@ $(document).ready(function() {
                     document.getElementById('sent-to-username').innerText = listUsers[user];
                     document.getElementById('message').innerHTML = '';
 
+                    // khỏi tạo phòng (g, p) rồi gửi đến user muốn tạo phòng
                     socket.emit(
                         'create_room', 
                         {
@@ -114,15 +112,20 @@ $(document).ready(function() {
 
     // khi nhận được yêu cầu tạo phòng từ một user khác
     socket.on('create_room', function(json) {
+        // nếu là khởi tạo phòng
         if (json.header == 'init_g_p') {
+            // lưu lại g, p, và id của người gửi
             g = bigInt(json.g);
             p = bigInt(json.p);
             pid = json.pid;
 
             document.getElementById('sent-to-username').innerText = listUsers[pid];
+
+            // tạo khóa riêng tư a, tính khóa công khai A
             a = generateBigInt(8);
             A = g.modPow(a, p);
 
+            // gửi A cho user muốn tạo phòng
             socket.emit(
                 'create_room', 
                 { 
@@ -132,8 +135,13 @@ $(document).ready(function() {
                     pid: pid
                 }
             );
-        } else if (json.header == 'share_key') {
+        } 
+        // nếu là khóa công khai
+        else if (json.header == 'share_key') {
+            // lưu lại khóa công khai của người muốn tạo phòng 
             B = bigInt(json.key);
+
+            // tính khóa bí mật chung
             K = B.modPow(a, p);
 
             const li = document.createElement('li');
