@@ -1,12 +1,12 @@
 from app import app, socketio
-from flask import render_template, request, jsonify
+from flask import render_template, request
 from flask_socketio import send, emit
-import app.utils as utils
-import random
 from datetime import datetime
 
+# danh sách user
 clients = {}
 
+# thực hiện gửi message giữa các user
 @socketio.on('message')
 def handlesMessage(json):
     global clients
@@ -28,6 +28,7 @@ def handlesMessage(json):
         room=json.get('sid')
     )
 
+# login user
 @socketio.on('login')
 def login(json):
     print('User login:', json.get('username'))
@@ -49,6 +50,7 @@ def login(json):
         broadcast=True
     )
 
+# logout user
 @socketio.on('logout')
 def logout(json):
     print('User logout:', json.get('username'))
@@ -63,11 +65,13 @@ def logout(json):
         broadcast=True
     )
 
+# user connect
 @socketio.on('connect')
 def connect():
     global clients
     print('user connect, has {} connection'.format(len(clients)))
 
+# user disconnect
 @socketio.on('disconnect')
 def disconnect():
     global clients
@@ -81,6 +85,7 @@ def disconnect():
         broadcast=True
     )
 
+# tạo phòng chat giữa 2 user
 @socketio.on('create_room')
 def handles(json):
     if json.get('header') == 'init_g_p':

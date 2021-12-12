@@ -81,6 +81,7 @@ $(document).ready(function() {
     socket.on('users', function(json) {
         document.getElementById('count').innerText = json.user_count;
 
+        // lấy danh sách user
         listUsers = json.list_users;
         document.getElementById('list-user').innerHTML = '';
         for (let user in listUsers) {
@@ -88,6 +89,8 @@ $(document).ready(function() {
                 var item = document.createElement('li');
                 item.classList.add('item-user');
                 item.innerText = listUsers[user];
+
+                // gắn sự kiện tạo phòng lên mỗi item trong list users
                 item.addEventListener("click", function() {
                     document.getElementById('sent-to-username').innerText = listUsers[user];
                     document.getElementById('message').innerHTML = '';
@@ -109,6 +112,7 @@ $(document).ready(function() {
         }
     });
 
+    // khi nhận được yêu cầu tạo phòng từ một user khác
     socket.on('create_room', function(json) {
         if (json.header == 'init_g_p') {
             g = bigInt(json.g);
@@ -143,6 +147,7 @@ $(document).ready(function() {
                 `Khóa bí mật được tính ra từ thuật toán(K): ${K}`;
             $('#message').append(li);
 
+            // mã hóa tin nhắn trước khi gửi đến user khác
             $('#sendBtn').on('click', function() {
                 var msg = $('#myMessage').val();
                 console.log(`Plaintext: ${msg}`);
@@ -164,6 +169,7 @@ $(document).ready(function() {
         }
     });
 
+    // giải mã tin nhắn bị mã hóa
     socket.on('message', function(json) {
         console.log(`Ciphertext: ${json.msg}`);
 
