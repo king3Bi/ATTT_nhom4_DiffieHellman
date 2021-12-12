@@ -12,7 +12,7 @@ virtualenv venv
 
 ### Kích hoạt môi trường ảo: trên Windows chạy 
 ```bash
-venv/Script/activate
+.\venv\Scripts\activate
 ```
 
 ### Nếu không kích hoạt được môi trường ảo thì mở powerShell với quyền adminstrator, chạy lệnh sau đây rồi kích hoạt lại:
