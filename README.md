@@ -24,4 +24,3 @@ Set-ExecutionPolicy Unrestricted -Force
 ```bash
 pip install -r requirements.txt
 ```
-
